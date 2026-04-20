@@ -62,12 +62,14 @@ function autoBotReply(text) {
   const lower = text.toLowerCase();
   let reply = "Bot: Ich habe deine Nachricht erhalten.";
 
-  if (lower.includes("hallo") || lower.includes("hi")) {
-    reply = "Bot: Hallo! Schoen, dass du hier bist.";
+  if (lower.includes("hallo") || lower.includes("hey")) {
+    reply = "Bot: Hallo! Schön, dass du hier bist.";
   } else if (lower.includes("hilfe")) {
     reply = "Bot: Ich helfe dir gern. Frag mich etwas zum Chat oder Code.";
   } else if (lower.includes("code")) {
     reply = "Bot: Nutze den Editor unten, um JavaScript zu testen und zu teilen.";
+  }else if (lower.includes("stop")) {
+       reply = "Bot: OK, ich höre auf.";
   }
 
   setTimeout(() => {
