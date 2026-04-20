@@ -114,48 +114,52 @@ function sendCodeToChat(code) {
 <template>
   <main class="app-shell">
     <div class="chat-layout">
-      <ChatHeader title="Greenie Chat Tool" :online-count="onlineCount" />
+      <aside class="info-box">
+        <ChatHeader title="Greenie Chat Tool" :online-count="onlineCount" />
 
-      <EntityList
-        :entities="entities"
-        :selected-id="selectedEntityId"
-        @select="selectEntity"
-      />
+        <EntityList
+          :entities="entities"
+          :selected-id="selectedEntityId"
+          @select="selectEntity"
+        />
+      </aside>
 
-      <CodeEditor
-        :selected-entity-name="selectedEntity.name"
-        @run="runCodeFromEditor"
-        @send="sendCodeToChat"
-      />
+      <section class="content-box">
+        <CodeEditor
+          :selected-entity-name="selectedEntity.name"
+          @run="runCodeFromEditor"
+          @send="sendCodeToChat"
+        />
 
-      <section class="chat-box">
-        <div class="chat-meta">
-          <strong>Aktiv:</strong>
-          <span>
-            {{ selectedEntity.name }} ({{ selectedEntity.role }}) -
-            {{ selectedEntity.mood }}
-          </span>
-        </div>
+        <section class="chat-box">
+          <div class="chat-meta">
+            <strong>Aktiv:</strong>
+            <span>
+              {{ selectedEntity.name }} ({{ selectedEntity.role }}) -
+              {{ selectedEntity.mood }}
+            </span>
+          </div>
 
-        <div class="messages">
-          <article v-for="message in messages" :key="message.id" class="message">
-            <div class="line">
-              <strong>{{ message.author }}</strong>
-              <small>{{ message.timestamp }}</small>
-            </div>
-            <p class="message-content">{{ message.text }}</p>
-          </article>
-        </div>
+          <div class="messages">
+            <article v-for="message in messages" :key="message.id" class="message">
+              <div class="line">
+                <strong>{{ message.author }}</strong>
+                <small>{{ message.timestamp }}</small>
+              </div>
+              <p class="message-content">{{ message.text }}</p>
+            </article>
+          </div>
 
-        <form class="input-row" @submit.prevent="sendMessage">
-          <input
-            v-model="input"
-            type="text"
-            placeholder="Nachricht schreiben..."
-            autocomplete="off"
-          />
-          <button type="submit">Senden</button>
-        </form>
+          <form class="input-row" @submit.prevent="sendMessage">
+            <input
+              v-model="input"
+              type="text"
+              placeholder="Nachricht schreiben..."
+              autocomplete="off"
+            />
+            <button type="submit">Senden</button>
+          </form>
+        </section>
       </section>
     </div>
   </main>

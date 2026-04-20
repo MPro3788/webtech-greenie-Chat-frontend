@@ -22,16 +22,31 @@ body {
 }
 
 .app-shell {
-  width: min(760px, 100%);
+  width: min(1080px, 100%);
 }
 
 .chat-layout {
   display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  align-items: start;
   gap: 1rem;
   background: rgba(16, 68, 35, 0.55);
   padding: 1rem;
   border-radius: 16px;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+}
+
+.info-box {
+  display: grid;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.content-box {
+  display: grid;
+  gap: 1rem;
 }
 
 .chat-box {
@@ -105,4 +120,14 @@ body {
 .input-row button:hover {
   transform: translateY(-1px);
   filter: brightness(1.05);
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    width: min(760px, 100%);
+  }
+
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
 }
