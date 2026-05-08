@@ -1,8 +1,9 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import ChatHeader from "./components/ChatHeader.vue";
 import CodeEditor from "./components/CodeEditor.vue";
 import EntityList from "./components/EntityList.vue";
+import { getData, getHello, postData } from "./api/greenieApi";
 
 const entities = ref([
   { id: 1, name: "Anna", role: "Moderatorin", mood: "motiviert" },
@@ -24,6 +25,7 @@ const messages = ref([
 
 const onlineCount = computed(() => entities.value.length);
 const selectedEntityId = computed(() => selectedEntity.value?.id ?? null);
+const isLoadingEntities = ref(false);
 
 function getTimestamp() {
   const now = new Date();
@@ -46,7 +48,7 @@ function selectEntity(entity) {
   selectedEntity.value = entity;
 }
 
-function sendMessage() {
+async function sendMessage() {
   const trimmed = input.value.trim();
   if (!trimmed || !selectedEntity.value) {
     return;
@@ -55,7 +57,25 @@ function sendMessage() {
   pushMessage(selectedEntity.value.name, trimmed);
 
   input.value = "";
-  autoBotReply(trimmed);
+
+  try {
+    const payload = {
+      user: selectedEntity.value.name,
+      beruf: selectedEntity.value.role,
+      alter: selectedEntity.value.age ?? 0
+    };
+    const created = await postData(payload);
+    pushMessage(
+      "Backend",
+      `POST /data OK: ${created.user} (${created.beruf}), Alter ${created.alter}`
+    );
+  } catch (error) {
+    const message =
+      error?.response?.data?.message ??
+      error?.message ??
+      "Unbekannter Fehler beim POST /data";
+    pushMessage("System", `Fehler beim Backend-POST: ${String(message)}`);
+  }
 }
 
 function autoBotReply(text) {
@@ -109,6 +129,44 @@ function sendCodeToChat(code) {
     );
   }, 500);
 }
+
+onMounted(async () => {
+  try {
+    const hello = await getHello();
+    pushMessage("Backend", `GET / OK: ${String(hello)}`);
+  } catch (error) {
+    const message =
+      error?.response?.data?.message ??
+      error?.message ??
+      "Unbekannter Fehler bei GET /";
+    pushMessage("System", `Backend nicht erreichbar (GET /): ${String(message)}`);
+  }
+
+  isLoadingEntities.value = true;
+  try {
+    const data = await getData();
+    const mapped = (Array.isArray(data) ? data : []).map((item, index) => ({
+      id: index + 1,
+      name: item.user,
+      role: item.beruf,
+      mood: "online",
+      age: item.alter
+    }));
+
+    if (mapped.length > 0) {
+      entities.value = mapped;
+      selectedEntity.value = mapped[0];
+    }
+  } catch (error) {
+    const message =
+      error?.response?.data?.message ??
+      error?.message ??
+      "Unbekannter Fehler bei GET /data";
+    pushMessage("System", `Fehler beim Laden (GET /data): ${String(message)}`);
+  } finally {
+    isLoadingEntities.value = false;
+  }
+});
 </script>
 
 <template>
@@ -126,7 +184,7 @@ function sendCodeToChat(code) {
 
       <section class="content-box">
         <CodeEditor
-          :selected-entity-name="selectedEntity.name"
+          :selected-entity-name="selectedEntity?.name ?? ''"
           @run="runCodeFromEditor"
           @send="sendCodeToChat"
         />
@@ -135,8 +193,8 @@ function sendCodeToChat(code) {
           <div class="chat-meta">
             <strong>Aktiv:</strong>
             <span>
-              {{ selectedEntity.name }} ({{ selectedEntity.role }}) -
-              {{ selectedEntity.mood }}
+              {{ selectedEntity?.name }} ({{ selectedEntity?.role }}) -
+              {{ selectedEntity?.mood }}
             </span>
           </div>
 
@@ -156,8 +214,9 @@ function sendCodeToChat(code) {
               type="text"
               placeholder="Nachricht schreiben..."
               autocomplete="off"
+              :disabled="isLoadingEntities"
             />
-            <button type="submit">Senden</button>
+            <button type="submit" :disabled="isLoadingEntities">Senden</button>
           </form>
         </section>
       </section>
