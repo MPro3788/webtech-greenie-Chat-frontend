@@ -134,7 +134,7 @@ function sendCodeToChat(code) {
 onMounted(async () => {
   try {
     // absolute URL overrides baseURL (/api) to call Render backend directly
-    const hello = (await http.get("https://webtech-greenie-chat-backend.onrender.com/")).data;
+    const hello = (await http.get("https://webtech-greenie-chat-backend.onrender.com")).data;
     pushMessage("Backend", `GET / OK: ${String(hello)}`);
   } catch (error) {
     const message =
