@@ -1,7 +1,7 @@
 import { http } from "./http";
 
 export async function getHello() {
-  const res = await http.get("/");
+  const res = await http.get("https://webtech-greenie-chat-backend.onrender.com");
   return res.data;
 }
 
