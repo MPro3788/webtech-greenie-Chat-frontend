@@ -1,7 +1,8 @@
 import { http } from "./http";
 
 export async function getHello() {
-  const res = await http.get("https://webtech-greenie-chat-backend.onrender.com");
+  // Use relative path so Vite proxy (/api -> Render) can avoid CORS in browser
+  const res = await http.get("/");
   return res.data;
 }
 
