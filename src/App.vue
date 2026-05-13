@@ -4,7 +4,6 @@ import ChatHeader from "./components/ChatHeader.vue";
 import CodeEditor from "./components/CodeEditor.vue";
 import EntityList from "./components/EntityList.vue";
 import { getData, getHello, postData } from "./api/greenieApi";
-import { http } from "./api/http";
 
 const entities = ref([
   { id: 1, name: "Anna", role: "Moderatorin", mood: "motiviert" },
@@ -133,9 +132,9 @@ function sendCodeToChat(code) {
 
 onMounted(async () => {
   try {
-    // absolute URL overrides baseURL (/api) to call Render backend directly
-    const hello = (await http.get("https://webtech-greenie-chat-backend.onrender.com")).data;
-    pushMessage("Backend", `GET https://webtech-greenie-chat-backend.onrender.com OK: ${String(hello)}`);
+    // via Vite proxy (/api -> Render) to avoid CORS in browser dev mode
+    const hello = await getHello();
+    pushMessage("Backend", `GET / OK: ${String(hello)}`);
   } catch (error) {
     const message =
       error?.response?.data?.message ??
