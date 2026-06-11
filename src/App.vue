@@ -5,14 +5,8 @@ import CodeEditor from "./components/CodeEditor.vue";
 import EntityList from "./components/EntityList.vue";
 import { getData, getHello, postData } from "./api/greenieApi";
 
-const entities = ref([
-  { id: 1, name: "Anna", role: "Moderatorin", mood: "motiviert" },
-  { id: 2, name: "Ben", role: "Entwickler", mood: "fokussiert" },
-  { id: 3, name: "Clara", role: "Support", mood: "hilfsbereit" },
-  { id: 4, name: "David", role: "Product Owner", mood: "neugierig" }
-]);
-
-const selectedEntity = ref(entities.value[0]);
+const entities = ref([]);
+const selectedEntity = ref(null);
 const input = ref("");
 const messages = ref([
   {
@@ -26,6 +20,17 @@ const messages = ref([
 const onlineCount = computed(() => entities.value.length);
 const selectedEntityId = computed(() => selectedEntity.value?.id ?? null);
 const isLoadingEntities = ref(false);
+const isSavingEntity = ref(false);
+
+function mapGreenieToEntity(item) {
+  return {
+    id: item.id,
+    name: item.name,
+    role: item.beruf,
+    age: item.alter,
+    mood: "online"
+  };
+}
 
 function getTimestamp() {
   const now = new Date();
@@ -48,34 +53,78 @@ function selectEntity(entity) {
   selectedEntity.value = entity;
 }
 
-async function sendMessage() {
+async function loadEntities() {
+  isLoadingEntities.value = true;
+  try {
+    const data = await getData();
+    const mapped = (Array.isArray(data) ? data : []).map(mapGreenieToEntity);
+    entities.value = mapped;
+
+    if (mapped.length > 0) {
+      const currentId = selectedEntity.value?.id;
+      selectedEntity.value =
+        mapped.find((entity) => entity.id === currentId) ?? mapped[0];
+    } else {
+      selectedEntity.value = null;
+    }
+  } catch (error) {
+    const message =
+      error?.response?.data?.message ??
+      error?.message ??
+      "Unbekannter Fehler bei GET /data";
+    pushMessage("System", `Fehler beim Laden (GET /data): ${String(message)}`);
+  } finally {
+    isLoadingEntities.value = false;
+  }
+}
+
+async function createEntity(payload) {
+  isSavingEntity.value = true;
+  try {
+    const created = await postData(payload.id, payload);
+    const entity = mapGreenieToEntity(created);
+    const existingIndex = entities.value.findIndex((item) => item.id === entity.id);
+
+    if (existingIndex >= 0) {
+      entities.value[existingIndex] = entity;
+    } else {
+      entities.value = [...entities.value, entity];
+    }
+
+    selectedEntity.value = entity;
+    pushMessage(
+      "Backend",
+      `POST /data/${entity.id} OK: ${entity.name} (${entity.role}), Alter ${entity.age}`
+    );
+  } catch (error) {
+    let message =
+      error?.response?.data?.message ??
+      error?.message ??
+      "Unbekannter Fehler beim POST /data/{id}";
+
+    if (error?.response?.status === 405) {
+      message =
+        "POST /data/{id} ist auf dem Backend noch nicht verfuegbar. Bitte das Backend neu deployen.";
+    }
+
+    pushMessage(
+      "System",
+      `Fehler beim Speichern (POST /data/${payload.id}): ${String(message)}`
+    );
+  } finally {
+    isSavingEntity.value = false;
+  }
+}
+
+function sendMessage() {
   const trimmed = input.value.trim();
   if (!trimmed || !selectedEntity.value) {
     return;
   }
 
   pushMessage(selectedEntity.value.name, trimmed);
-
   input.value = "";
-
-  try {
-    const payload = {
-      user: selectedEntity.value.name,
-      beruf: selectedEntity.value.role,
-      alter: selectedEntity.value.age ?? 0
-    };
-    const created = await postData(payload);
-    pushMessage(
-      "Backend",
-      `POST /data OK: ${created.user} (${created.beruf}), Alter ${created.alter}`
-    );
-  } catch (error) {
-    const message =
-      error?.response?.data?.message ??
-      error?.message ??
-      "Unbekannter Fehler beim POST /data";
-    pushMessage("System", `Fehler beim Backend-POST: ${String(message)}`);
-  }
+  autoBotReply(trimmed);
 }
 
 function autoBotReply(text) {
@@ -83,13 +132,13 @@ function autoBotReply(text) {
   let reply = "Bot: Ich habe deine Nachricht erhalten.";
 
   if (lower.includes("hallo") || lower.includes("hey")) {
-    reply = "Bot: Hallo! Schön, dass du hier bist.";
+    reply = "Bot: Hallo! Schoen, dass du hier bist.";
   } else if (lower.includes("hilfe")) {
     reply = "Bot: Ich helfe dir gern. Frag mich etwas zum Chat oder Code.";
   } else if (lower.includes("code")) {
     reply = "Bot: Nutze den Editor unten, um JavaScript zu testen und zu teilen.";
-  }else if (lower.includes("stop")) {
-       reply = "Bot: OK, ich höre auf.";
+  } else if (lower.includes("stop")) {
+    reply = "Bot: OK, ich hoere auf.";
   }
 
   setTimeout(() => {
@@ -132,7 +181,6 @@ function sendCodeToChat(code) {
 
 onMounted(async () => {
   try {
-    // via Vite proxy (/api -> Render) to avoid CORS in browser dev mode
     const hello = await getHello();
     pushMessage("Backend", `GET / OK: ${String(hello)}`);
   } catch (error) {
@@ -143,30 +191,7 @@ onMounted(async () => {
     pushMessage("System", `Backend nicht erreichbar (GET /): ${String(message)}`);
   }
 
-  isLoadingEntities.value = true;
-  try {
-    const data = await getData();
-    const mapped = (Array.isArray(data) ? data : []).map((item, index) => ({
-      id: index + 1,
-      name: item.user,
-      role: item.beruf,
-      mood: "online",
-      age: item.alter
-    }));
-
-    if (mapped.length > 0) {
-      entities.value = mapped;
-      selectedEntity.value = mapped[0];
-    }
-  } catch (error) {
-    const message =
-      error?.response?.data?.message ??
-      error?.message ??
-      "Unbekannter Fehler bei GET /data";
-    pushMessage("System", `Fehler beim Laden (GET /data): ${String(message)}`);
-  } finally {
-    isLoadingEntities.value = false;
-  }
+  await loadEntities();
 });
 </script>
 
@@ -179,13 +204,15 @@ onMounted(async () => {
         <EntityList
           :entities="entities"
           :selected-id="selectedEntityId"
+          :is-saving="isSavingEntity"
           @select="selectEntity"
+          @create="createEntity"
         />
       </aside>
 
       <section class="content-box">
         <CodeEditor
-          :selected-entity-name="selectedEntity?.name ?? ''"
+          :selected-entity-name="selectedEntity?.name ?? 'Keine Entitaet'"
           @run="runCodeFromEditor"
           @send="sendCodeToChat"
         />
@@ -193,10 +220,11 @@ onMounted(async () => {
         <section class="chat-box">
           <div class="chat-meta">
             <strong>Aktiv:</strong>
-            <span>
-              {{ selectedEntity?.name }} ({{ selectedEntity?.role }}) -
-              {{ selectedEntity?.mood }}
+            <span v-if="selectedEntity">
+              {{ selectedEntity.name }} ({{ selectedEntity.role }}) -
+              {{ selectedEntity.age }} Jahre
             </span>
+            <span v-else>Keine Entitaet ausgewaehlt</span>
           </div>
 
           <div class="messages">
@@ -215,9 +243,11 @@ onMounted(async () => {
               type="text"
               placeholder="Nachricht schreiben..."
               autocomplete="off"
-              :disabled="isLoadingEntities"
+              :disabled="isLoadingEntities || !selectedEntity"
             />
-            <button type="submit" :disabled="isLoadingEntities">Senden</button>
+            <button type="submit" :disabled="isLoadingEntities || !selectedEntity">
+              Senden
+            </button>
           </form>
         </section>
       </section>
