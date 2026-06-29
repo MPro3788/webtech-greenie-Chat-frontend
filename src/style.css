@@ -23,6 +23,12 @@ body {
 
 .app-shell {
   width: min(1080px, 100%);
+  display: grid;
+  place-items: center;
+}
+
+.app-shell .chat-layout {
+  width: 100%;
 }
 
 .chat-layout {

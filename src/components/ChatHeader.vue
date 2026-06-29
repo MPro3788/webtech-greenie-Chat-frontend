@@ -7,8 +7,14 @@ defineProps({
   onlineCount: {
     type: Number,
     required: true
+  },
+  userName: {
+    type: String,
+    default: ""
   }
 });
+
+const emit = defineEmits(["logout"]);
 </script>
 
 <template>
@@ -16,8 +22,15 @@ defineProps({
     <div>
       <h1>{{ title }}</h1>
       <p>{{ onlineCount }} Nutzer online</p>
+      <p v-if="userName" class="user-line">Angemeldet als {{ userName }}</p>
     </div>
-    <span class="status-dot" aria-label="online"></span>
+
+    <div class="header-actions">
+      <button type="button" class="logout-btn" @click="emit('logout')">
+        Abmelden
+      </button>
+      <span class="status-dot" aria-label="online"></span>
+    </div>
   </header>
 </template>
 
@@ -41,6 +54,32 @@ p {
   margin: 0.25rem 0 0;
   font-size: 0.88rem;
   opacity: 0.9;
+}
+
+.user-line {
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logout-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 0.85rem;
+  background: rgba(255, 255, 255, 0.22);
+  color: #f8fff8;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.32);
 }
 
 .status-dot {

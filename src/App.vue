@@ -3,7 +3,11 @@ import { computed, onMounted, ref } from "vue";
 import ChatHeader from "./components/ChatHeader.vue";
 import CodeEditor from "./components/CodeEditor.vue";
 import EntityList from "./components/EntityList.vue";
+import LoginForm from "./components/LoginForm.vue";
 import { getData, getHello, postData } from "./api/greenieApi";
+import { useAuth } from "./composables/useAuth";
+
+const { user, isAuthenticated, logout } = useAuth();
 
 const entities = ref([]);
 const selectedEntity = ref(null);
@@ -179,7 +183,11 @@ function sendCodeToChat(code) {
   }, 500);
 }
 
-onMounted(async () => {
+async function handleLogout() {
+  await logout();
+}
+
+async function initializeApp() {
   try {
     const hello = await getHello();
     pushMessage("Backend", `GET / OK: ${String(hello)}`);
@@ -192,14 +200,27 @@ onMounted(async () => {
   }
 
   await loadEntities();
+}
+
+onMounted(async () => {
+  if (isAuthenticated.value) {
+    await initializeApp();
+  }
 });
 </script>
 
 <template>
   <main class="app-shell">
-    <div class="chat-layout">
+    <LoginForm v-if="!isAuthenticated" @logged-in="initializeApp" />
+
+    <div v-else class="chat-layout">
       <aside class="info-box">
-        <ChatHeader title="Greenie Chat Tool" :online-count="onlineCount" />
+        <ChatHeader
+          title="Greenie Chat Tool"
+          :online-count="onlineCount"
+          :user-name="user?.displayName ?? user?.username ?? ''"
+          @logout="handleLogout"
+        />
 
         <EntityList
           :entities="entities"
