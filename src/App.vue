@@ -5,6 +5,7 @@ import CodeEditor from "./components/CodeEditor.vue";
 import EntityList from "./components/EntityList.vue";
 import LoginForm from "./components/LoginForm.vue";
 import { getData, getHello, postData } from "./api/greenieApi";
+const VITE_API_BASE_URL = "https://webtech-greenie-chat-backend.onrender.com";
 import { useAuth } from "./composables/useAuth";
 
 const { user, isAuthenticated, logout } = useAuth();
