@@ -4,10 +4,13 @@ import ChatHeader from "./components/ChatHeader.vue";
 import CodeEditor from "./components/CodeEditor.vue";
 import EntityList from "./components/EntityList.vue";
 import LoginForm from "./components/LoginForm.vue";
+import SettingsPanel from "./components/SettingsPanel.vue";
 import { getData, getHello, postData } from "./api/greenieApi";
 import { useAuth } from "./composables/useAuth";
 
-const { user, isAuthenticated, logout } = useAuth();
+const { user, isAuthenticated, logout, updateDisplayName } = useAuth();
+
+const isSettingsOpen = ref(false);
 
 const entities = ref([]);
 const selectedEntity = ref(null);
@@ -187,6 +190,18 @@ async function handleLogout() {
   await logout();
 }
 
+function openSettings() {
+  isSettingsOpen.value = true;
+}
+
+function closeSettings() {
+  isSettingsOpen.value = false;
+}
+
+function handleProfileSaved(displayName) {
+  updateDisplayName(displayName);
+}
+
 async function initializeApp() {
   try {
     const hello = await getHello();
@@ -220,6 +235,7 @@ onMounted(async () => {
           :online-count="onlineCount"
           :user-name="user?.displayName ?? user?.username ?? ''"
           @logout="handleLogout"
+          @open-settings="openSettings"
         />
 
         <EntityList
@@ -273,5 +289,13 @@ onMounted(async () => {
         </section>
       </section>
     </div>
+
+    <SettingsPanel
+      :open="isSettingsOpen"
+      :user-name="user?.displayName ?? user?.username ?? ''"
+      :messages="messages"
+      @close="closeSettings"
+      @profile-saved="handleProfileSaved"
+    />
   </main>
 </template>

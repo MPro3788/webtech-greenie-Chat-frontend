@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { login as loginRequest, logout as logoutRequest } from "../api/authApi";
-import { clearAuth, getStoredUser, saveAuth } from "../auth/session";
+import { clearAuth, getStoredUser, saveAuth, getStoredToken } from "../auth/session";
 
 const user = ref(getStoredUser());
 
@@ -33,10 +33,28 @@ export function useAuth() {
     }
   }
 
+  function updateDisplayName(displayName) {
+    if (!user.value) {
+      return;
+    }
+
+    const nextUser = {
+      ...user.value,
+      displayName: displayName || user.value.username
+    };
+
+    user.value = nextUser;
+    saveAuth({
+      token: getStoredToken(),
+      user: nextUser
+    });
+  }
+
   return {
     user,
     isAuthenticated,
     login,
-    logout
+    logout,
+    updateDisplayName
   };
 }
