@@ -88,7 +88,7 @@ function submitEntity() {
         :disabled="isSaving"
       />
       <button type="submit" :disabled="isSaving">
-        {{ isSaving ? "Speichern..." : "POST /data/{id}" }}
+        {{ isSaving ? "POST /data/{id}" : "Speichern..."}}
       </button>
     </form>
   </section>
