@@ -8,7 +8,6 @@ export default defineConfig({
       "/api": {
         target: "https://webtech-greenie-chat-backend.onrender.com",
         changeOrigin: true,
-        secure: false,
         rewrite: (path) => path.replace(/^\/api/, "")
       }
     }

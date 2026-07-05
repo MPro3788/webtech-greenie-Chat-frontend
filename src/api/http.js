@@ -6,7 +6,7 @@ export const http = axios.create({
   headers: {
     Accept: "application/json"
   },
-  timeout: 60000
+  timeout: 15000
 });
 
 http.interceptors.request.use((config) => {
